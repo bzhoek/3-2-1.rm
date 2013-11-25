@@ -11,6 +11,9 @@ class AppDelegate
     buildMenu
     buildWindow
     resetTimer
+
+    filePath = NSBundle.mainBundle.pathForResource("simple_bell", ofType: "aif")
+    @sound = NSSound.alloc.initWithContentsOfFile(filePath, byReference: true)
   end
 
   def buildWindow
@@ -54,6 +57,7 @@ class AppDelegate
     @limit.stringValue = "00:00:10"
     @limit.font = font
     @limit.delegate = self
+    @limit.alignment = NSRightTextAlignment
     @limit
   end
 
@@ -94,6 +98,7 @@ class AppDelegate
   end
 
   def resetTimer(sender = nil)
+    @limit.window.makeFirstResponder(nil)
     @start.cell.backgroundColor = START_COLOR
     @reset.cell.backgroundColor = RESET_DIMMED
     parseLimit
@@ -101,6 +106,7 @@ class AppDelegate
   end
 
   def startStopTimer(sender)
+    @limit.window.makeFirstResponder(nil)
     if @timer.nil?
       @timer = NSTimer.scheduledTimerWithTimeInterval(1.0,
         :target => self,
@@ -131,6 +137,7 @@ class AppDelegate
       @timer.invalidate
       @timer = nil
       @start.cell.backgroundColor = START_DIMMED
+      @sound.play
     end
     drawTimer
   end
