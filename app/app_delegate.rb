@@ -13,15 +13,15 @@ class AppDelegate
   end
 
   def buildWindow
-    @mainWindow = NSWindow.alloc.initWithContentRect([[240, 180], [312, 116]],
+    @mainWindow = TimerWindow.alloc.initWithContentRect([[240, 180], [312, 116]],
       styleMask: NSTexturedBackgroundWindowMask,
       backing: NSBackingStoreBuffered,
       defer: false)
     @mainWindow.title = NSBundle.mainBundle.infoDictionary['CFBundleName']
     @mainWindow.orderFrontRegardless
+    @mainWindow.level = NSScreenSaverWindowLevel
     @mainWindow.delegate = self
     @mainWindow.backgroundColor = BACKGROUND
-    @mainWindow.setLevel(NSScreenSaverWindowLevel)
 
     @mainWindow.contentView.addSubview(createClock())
     @mainWindow.contentView.addSubview(createLimit())
@@ -48,10 +48,9 @@ class AppDelegate
     @limit = NSTextField.alloc.initWithFrame([[10, 8], [60, 15]])
     @limit.autoresizingMask = NSViewMinXMargin|NSViewMinYMargin|NSViewWidthSizable
     @limit.bordered = false
-    @limit.selectable = true
     @limit.editable = true
     @limit.backgroundColor = BACKGROUND
-    @limit.stringValue = "00:00:00"
+    @limit.stringValue = "00:10:00"
     @limit.font = font
     @limit
   end
@@ -88,12 +87,13 @@ class AppDelegate
   end
 
   def resetTimer(sender = nil)
-    @countDown = 1.0 * 15 * 60
+    parseLimit
     drawTimer
   end
 
   def startStopTimer(sender)
     if @timer.nil?
+      parseLimit
       @timer = NSTimer.scheduledTimerWithTimeInterval(0.1,
         :target => self,
         :selector => 'timerFired',
@@ -106,6 +106,13 @@ class AppDelegate
       @timer = nil
       @start.cell.backgroundColor = START_COLOR
       @reset.cell.backgroundColor = RESET_DIMMED
+    end
+  end
+
+  def parseLimit
+    @countDown = 0
+    @limit.stringValue.split(':').reverse.each_with_index do |e, i|
+      @countDown += (60 ** i) * e.to_i
     end
   end
 
