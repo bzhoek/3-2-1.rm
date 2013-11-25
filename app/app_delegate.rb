@@ -2,6 +2,7 @@ class AppDelegate
 
   BACKGROUND = NSColor.colorWithDeviceRed(39/255.0, green: 39/255.0, blue: 39/255.0, alpha: 1)
   START_COLOR = NSColor.colorWithDeviceRed(26/255.0, green: 198/255.0, blue: 7/255.0, alpha: 1)
+  START_DIMMED = NSColor.colorWithDeviceRed(32/255.0, green: 67/255.0, blue: 31/255.0, alpha: 1)
   RUNNING_COLOR = NSColor.colorWithDeviceRed(253/255.0, green: 0/255.0, blue: 6/255.0, alpha: 1)
   RESET_ACTIVE = NSColor.colorWithDeviceRed(255/255.0, green: 255/255.0, blue: 11/255.0, alpha: 1)
   RESET_DIMMED = NSColor.colorWithDeviceRed(74/255.0, green: 74/255.0, blue: 31/255.0, alpha: 1)
@@ -50,9 +51,15 @@ class AppDelegate
     @limit.bordered = false
     @limit.editable = true
     @limit.backgroundColor = BACKGROUND
-    @limit.stringValue = "00:10:00"
+    @limit.stringValue = "00:00:10"
     @limit.font = font
+    @limit.delegate = self
     @limit
+  end
+
+  def controlTextDidChange(n)
+    parseLimit
+    drawTimer
   end
 
   def createStartButton
@@ -87,14 +94,15 @@ class AppDelegate
   end
 
   def resetTimer(sender = nil)
+    @start.cell.backgroundColor = START_COLOR
+    @reset.cell.backgroundColor = RESET_DIMMED
     parseLimit
     drawTimer
   end
 
   def startStopTimer(sender)
     if @timer.nil?
-      parseLimit
-      @timer = NSTimer.scheduledTimerWithTimeInterval(0.1,
+      @timer = NSTimer.scheduledTimerWithTimeInterval(1.0,
         :target => self,
         :selector => 'timerFired',
         :userInfo => nil,
@@ -117,7 +125,13 @@ class AppDelegate
   end
 
   def timerFired
-    @countDown -= 0.1
+    @countDown -= 1
+    if @countDown == 0
+      @countDown = 0
+      @timer.invalidate
+      @timer = nil
+      @start.cell.backgroundColor = START_DIMMED
+    end
     drawTimer
   end
 
