@@ -11,4 +11,5 @@ end
 Motion::Project::App.setup do |app|
   # Use `rake config' to see complete project settings.
   app.name = '3-2-1'
+  app.icon = "3-2-1.icns"
 end
