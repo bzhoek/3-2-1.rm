@@ -31,18 +31,28 @@ class AppDelegate
     @mainWindow.contentView.addSubview(createLimit())
     @mainWindow.contentView.addSubview(createStartButton())
     @mainWindow.contentView.addSubview(createResetButton())
+    @mainWindow.contentView.addSubview(createTitle())
+  end
+
+  def createTitle
+    size = @mainWindow.frame.size
+    @title = NSTextField.alloc.initWithFrame([[0, size.height - 24], [size.width, 20]])
+    @title.bordered = false
+    @title.editable = false
+    @title.backgroundColor = BACKGROUND
+    @title.alignment = NSCenterTextAlignment
+    @title.stringValue = "三二一"
+    @title
   end
 
   def createClock
     size = @mainWindow.frame.size
-    font = NSFontManager.sharedFontManager.fontWithFamily("Lucida Grande", traits: NSBoldFontMask, weight: 0, size: 64)
-    @clock = NSTextField.alloc.initWithFrame([[10, 8 + 15], [size.width - 10 - 10, 80]])
-    @clock.autoresizingMask = NSViewMinXMargin|NSViewMinYMargin|NSViewWidthSizable
+    @clock = TimerTextField.alloc.initWithFrame([[10, 8 + 15], [size.width - 10 - 10, 80]])
     @clock.bordered = false
     @clock.editable = false
     @clock.backgroundColor = BACKGROUND
     @clock.stringValue = "00:00:00"
-    @clock.font = font
+    @clock.font = NSFontManager.sharedFontManager.fontWithFamily("Lucida Grande", traits: NSBoldFontMask, weight: 0, size: 64)
     @clock
   end
 

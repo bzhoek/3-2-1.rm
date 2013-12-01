@@ -5,3 +5,11 @@ class TimerWindow < NSWindow
   end
 
 end
+
+class TimerTextField < NSTextField
+
+  def mouseDownCanMoveWindow
+    true
+  end
+
+end
