@@ -36,7 +36,7 @@ class AppDelegate
 
   def createTitle
     size = @mainWindow.frame.size
-    @title = NSTextField.alloc.initWithFrame([[0, size.height - 24], [size.width, 20]])
+    @title = DragThroughTextField.alloc.initWithFrame([[0, size.height - 24], [size.width, 20]])
     @title.bordered = false
     @title.editable = false
     @title.backgroundColor = BACKGROUND
@@ -47,7 +47,7 @@ class AppDelegate
 
   def createClock
     size = @mainWindow.frame.size
-    @clock = TimerTextField.alloc.initWithFrame([[10, 8 + 15], [size.width - 10 - 10, 80]])
+    @clock = DragThroughTextField.alloc.initWithFrame([[10, 8 + 15], [size.width - 10 - 10, 80]])
     @clock.bordered = false
     @clock.editable = false
     @clock.backgroundColor = BACKGROUND

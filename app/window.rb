@@ -6,7 +6,7 @@ class TimerWindow < NSWindow
 
 end
 
-class TimerTextField < NSTextField
+class DragThroughTextField < NSTextField
 
   def mouseDownCanMoveWindow
     true
