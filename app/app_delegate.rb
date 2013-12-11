@@ -1,16 +1,20 @@
 class AppDelegate
 
   BACKGROUND = NSColor.colorWithDeviceRed(39/255.0, green: 39/255.0, blue: 39/255.0, alpha: 1)
-  START_COLOR = NSColor.colorWithDeviceRed(26/255.0, green: 198/255.0, blue: 7/255.0, alpha: 1)
-  START_DIMMED = NSColor.colorWithDeviceRed(32/255.0, green: 67/255.0, blue: 31/255.0, alpha: 1)
-  RUNNING_COLOR = NSColor.colorWithDeviceRed(253/255.0, green: 0/255.0, blue: 6/255.0, alpha: 1)
-  RESET_ACTIVE = NSColor.colorWithDeviceRed(255/255.0, green: 255/255.0, blue: 11/255.0, alpha: 1)
-  RESET_DIMMED = NSColor.colorWithDeviceRed(74/255.0, green: 74/255.0, blue: 31/255.0, alpha: 1)
+  TIMER_ACTIVE = NSColor.colorWithDeviceRed(42/255.0, green: 168/255.0, blue: 18/255.0, alpha: 1)
+  TIMER_DIMMED = NSColor.colorWithDeviceRed(21/255.0, green: 84/255.0, blue: 59/255.0, alpha: 1)
+  TIMER_RUNNING = NSColor.colorWithDeviceRed(206/255.0, green: 77/255.0, blue: 69/255.0, alpha: 1)
+  RESET_ACTIVE = NSColor.colorWithDeviceRed(255/255.0, green: 210/255.0, blue: 101/255.0, alpha: 1)
+  RESET_DIMMED = NSColor.colorWithDeviceRed(127/255.0, green: 105/255.0, blue: 50/255.0, alpha: 1)
+  CLOCK_ACTIVE = NSColor.colorWithDeviceRed(10/255.0, green: 123/255.0, blue: 131/255.0, alpha: 1)
+  CLOCK_RUNNING = NSColor.colorWithDeviceRed(19/255.0, green: 239/255.0, blue: 255/255.0, alpha: 1)
+  CLOCK_DIMMED = NSColor.colorWithDeviceRed(5/255.0, green: 60/255.0, blue: 64/255.0, alpha: 1)
 
   def applicationDidFinishLaunching(notification)
     buildMenu
     buildWindow
-    resetTimer
+    parseLimit
+    drawTimer
 
     filePath = NSBundle.mainBundle.pathForResource("simple_bell", ofType: "aif")
     @sound = NSSound.alloc.initWithContentsOfFile(filePath, byReference: true)
@@ -29,7 +33,8 @@ class AppDelegate
 
     @mainWindow.contentView.addSubview(createClock())
     @mainWindow.contentView.addSubview(createLimit())
-    @mainWindow.contentView.addSubview(createStartButton())
+    @mainWindow.contentView.addSubview(createClockButton())
+    @mainWindow.contentView.addSubview(createTimerButton())
     @mainWindow.contentView.addSubview(createResetButton())
     @mainWindow.contentView.addSubview(createTitle())
   end
@@ -47,13 +52,13 @@ class AppDelegate
 
   def createClock
     size = @mainWindow.frame.size
-    @clock = DragThroughTextField.alloc.initWithFrame([[10, 8 + 15], [size.width - 10 - 10, 80]])
-    @clock.bordered = false
-    @clock.editable = false
-    @clock.backgroundColor = BACKGROUND
-    @clock.stringValue = "00:00:00"
-    @clock.font = NSFontManager.sharedFontManager.fontWithFamily("Lucida Grande", traits: NSBoldFontMask, weight: 0, size: 64)
-    @clock
+    @display = DragThroughTextField.alloc.initWithFrame([[10, 8 + 15], [size.width - 10 - 10, 80]])
+    @display.bordered = false
+    @display.editable = false
+    @display.backgroundColor = BACKGROUND
+    @display.stringValue = "00:00:00"
+    @display.font = NSFontManager.sharedFontManager.fontWithFamily("Lucida Grande", traits: NSBoldFontMask, weight: 0, size: 64)
+    @display
   end
 
   def createLimit
@@ -76,19 +81,31 @@ class AppDelegate
     drawTimer
   end
 
-  def createStartButton
+  def createClockButton
     size = @mainWindow.frame.size
-    @start = NSButton.alloc.initWithFrame([[size.width - 8 - 15 - 4 - 15, 8], [15, 15]])
-    @start.title = ""
-    @start.action = "startStopTimer:"
-    @start.target = self
-    @start.bezelStyle = 0
-    @start.bordered = false
-    @start.cell.backgroundColor = START_COLOR
-    @start.autoresizingMask = NSViewMinXMargin|NSViewMinYMargin
-    @start
+    @clock = NSButton.alloc.initWithFrame([[size.width - 8 - 15 - 4 - 15 - 4 - 15, 8], [15, 15]])
+    @clock.title = ""
+    @clock.action = "startStopClock:"
+    @clock.target = self
+    @clock.bezelStyle = 0
+    @clock.bordered = false
+    @clock.cell.backgroundColor = CLOCK_ACTIVE
+    @clock.autoresizingMask = NSViewMinXMargin|NSViewMinYMargin
+    @clock
   end
 
+  def createTimerButton
+    size = @mainWindow.frame.size
+    @timer = NSButton.alloc.initWithFrame([[size.width - 8 - 15 - 4 - 15, 8], [15, 15]])
+    @timer.title = ""
+    @timer.action = "startStopTimer:"
+    @timer.target = self
+    @timer.bezelStyle = 0
+    @timer.bordered = false
+    @timer.cell.backgroundColor = TIMER_ACTIVE
+    @timer.autoresizingMask = NSViewMinXMargin|NSViewMinYMargin
+    @timer
+  end
 
   def createResetButton
     size = @mainWindow.frame.size
@@ -108,29 +125,59 @@ class AppDelegate
   end
 
   def resetTimer(sender = nil)
+    return if @countdown_timer.nil?
     @limit.window.makeFirstResponder(nil)
-    @start.cell.backgroundColor = START_COLOR
+    @timer.cell.backgroundColor = TIMER_ACTIVE
     @reset.cell.backgroundColor = RESET_DIMMED
     parseLimit
     drawTimer
   end
 
+  def startStopClock(sender)
+    if @clock_timer.nil?
+      drawClock
+      @clock_timer = NSTimer.scheduledTimerWithTimeInterval(1.0,
+        :target => self,
+        :selector => 'drawClock',
+        :userInfo => nil,
+        :repeats => true)
+      stopTimer
+      @clock.cell.backgroundColor = CLOCK_RUNNING
+    else
+      stopClock
+    end
+  end
+
   def startStopTimer(sender)
     @limit.window.makeFirstResponder(nil)
-    if @timer.nil?
-      @timer = NSTimer.scheduledTimerWithTimeInterval(1.0,
+    if @countdown_timer.nil?
+      @countdown_timer = NSTimer.scheduledTimerWithTimeInterval(1.0,
         :target => self,
         :selector => 'timerFired',
         :userInfo => nil,
         :repeats => true)
-      @start.cell.backgroundColor = RUNNING_COLOR
+      stopClock
+      @timer.cell.backgroundColor = TIMER_RUNNING
       @reset.cell.backgroundColor = RESET_ACTIVE
     else
-      @timer.invalidate
-      @timer = nil
-      @start.cell.backgroundColor = START_COLOR
-      @reset.cell.backgroundColor = RESET_DIMMED
+      stopTimer
     end
+  end
+
+  def stopTimer
+    return if @countdown_timer.nil?
+    @countdown_timer.invalidate
+    @countdown_timer = nil
+    @timer.cell.backgroundColor = TIMER_ACTIVE
+    @reset.cell.backgroundColor = RESET_DIMMED
+  end
+
+  def stopClock
+    return if @clock_timer.nil?
+    @clock_timer.invalidate
+    @clock_timer = nil
+    @clock.cell.backgroundColor = CLOCK_ACTIVE
+    drawTimer
   end
 
   def parseLimit
@@ -144,16 +191,20 @@ class AppDelegate
     @countDown -= 1
     if @countDown == 0
       @countDown = 0
-      @timer.invalidate
-      @timer = nil
-      @start.cell.backgroundColor = START_DIMMED
+      @countdown_timer.invalidate
+      @countdown_timer = nil
+      @timer.cell.backgroundColor = TIMER_DIMMED
       @sound.play
     end
     drawTimer
   end
 
   def drawTimer
-    @clock.stringValue = "00:%02d:%02d" % [@countDown / 60, @countDown % 60]
+    @display.stringValue = "00:%02d:%02d" % [@countDown / 60, @countDown % 60]
+  end
+
+  def drawClock
+    @display.stringValue = Time.now.strftime("%H:%M:%S")
   end
 
 end
